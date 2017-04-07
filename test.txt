@@ -1,0 +1,16 @@
+l1: 'ff', 30, sigmoid, bias=True
+
+pick 2 layers and create weight matrices
+
+
+5 layers
+ip, 3, op
+
+1
+ip, l1
+2
+l1, l2
+3
+l2, l3
+4
+l3, op
