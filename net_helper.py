@@ -1,7 +1,8 @@
 import tensorflow as tf
 import numpy as np
 
-net_dict={'input':{'neurons':30, 'type':'ff', 'activation':'sigmoid', 'bias':'True'},
+#Use batch size, batch sampling!!!!!!!!!!!!!!!!!!!!
+net_dict={'input':{'neurons':2, 'type':'ff', 'activation':'sigmoid', 'bias':'True'},
 			'l0':{'neurons':100, 'type':'ff', 'activation':'sigmoid', 'bias':'True'},
 			'l1':{'neurons':80, 'type':'ff', 'activation':'sigmoid', 'bias':'True'},
 			'l2':{'neurons':50, 'type':'ff', 'activation':'sigmoid', 'bias':'True'},
@@ -14,7 +15,6 @@ class Net:
 	ff- feedforward'''
 
 	def __init__(self, net_struct, cost_fn='CRSENT', learning_rate=0.01, epochs=100, batch_size=1000):
-		
 		self.layer_dict=net_struct
 		self.W=[]
 		self.layers=[]
@@ -27,7 +27,6 @@ class Net:
 			elif layer_name=='output':
 					self.output_dim=layer_attrs['neurons']
 		self.input_layer=tf.placeholder(tf.float32, [None, self.input_dim])
-		#self.output_layer=None
 		self.y_=tf.placeholder(tf.float32, [None, self.output_dim])
 
 		for i in range(0,(len(self.layer_dict)-1)):
@@ -35,24 +34,32 @@ class Net:
 			if i==0: #check for first matrix
 				#print self.layer_dict['input']['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
 				self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['l'+str(i)]['neurons']])))
-				self.layers.append(tf.matmul(self.input_layer, self.W[i]))
+				self.layers.append(tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i])))
 			elif i==(len(self.layer_dict)-2): #check for last matrix
 				#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['output']['neurons']
 				self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
-				self.output_layer=(tf.matmul(self.layers[i-1], self.W[i]))
+				self.output_layer=tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i]))
 			else:
 		 		#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
 		 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['l'+str(i)]['neurons']])))  
-		 		self.layers.append(tf.matmul(self.layers[i-1], self.W[i]))
+		 		self.layers.append(tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i])))
 		 	
 		if cost_fn=='CRSENT':
 			self.cost=tf.reduce_mean(-tf.reduce_sum(self.y_*tf.log(self.output_layer+0.01), reduction_indices=[1]))
 
 	def fit(self, X, y):
 		self.train_step=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.cost)
-		pass
-	def predict(self):
-		pass
+		with tf.Session() as sess:
+			for epoch in range(self.epochs):
+				#_= sess.run(self.cost, feed_dict={self.input_layer:X, self.y_:y})
+				cost, _= sess.run([self.cost, self.train_step], feed_dict={self.input_layer:X, self.y_:y})
+		
+
+	def predict(self, X_test):
+		with tf.Session() as sess:
+			predictions=sess.run(self.output_layer, feed_dict={self.input_layer:X_test})
+		return predictions
+
 
 	def visualize(self):
 		pass
@@ -60,4 +67,4 @@ class Net:
 if __name__ =="__main__":
 	myNet=Net(net_dict)
 	myNet.visualize()
-	myNet.fit([[1,2], [5,3], [23,4], [23,456]], [0,0,1,0])
+	#myNet.fit([[1,2], [5,3], [23,4], [23,456]], [0,0,1,0])
