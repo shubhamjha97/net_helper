@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import webbrowser
 
 #Use batch size, batch sampling!!!!!!!!!!!!!!!!!!!!
 net_dict={'input':{'neurons':2, 'type':'ff', 'activation':'sigmoid', 'bias':'True'},
@@ -32,26 +33,32 @@ class Net:
 		for i in range(0,(len(self.layer_dict)-1)):
 			#print i
 			if i==0: #check for first matrix
-				#print self.layer_dict['input']['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
-				self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['l'+str(i)]['neurons']])))
-				self.layers.append(tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i])))
+				with tf.name_scope('input_layer'):
+					#print self.layer_dict['input']['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
+					self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['l'+str(i)]['neurons']])))
+					self.layers.append(tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i])))
 			elif i==(len(self.layer_dict)-2): #check for last matrix
-				#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['output']['neurons']
-				self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
-				self.output_layer=tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i]))
+				with tf.name_scope('output_layer'):
+					#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['output']['neurons']
+					self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
+					self.output_layer=tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i]))
 			else:
-		 		#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
-		 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['l'+str(i)]['neurons']])))  
-		 		self.layers.append(tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i])))
-		 	
-		if cost_fn=='CRSENT':
-			self.cost=tf.reduce_mean(-tf.reduce_sum(self.y_*tf.log(self.output_layer+0.01), reduction_indices=[1]))
+				with tf.name_scope('layer_'+str(i-1)):
+		 			#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
+		 			self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['l'+str(i)]['neurons']])))  
+		 			self.layers.append(tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i])))
+		
+		with tf.name_scope('cost'):
+			if cost_fn=='CRSENT':
+				self.cost=tf.reduce_mean(-tf.reduce_sum(self.y_*tf.log(self.output_layer+0.01), reduction_indices=[1]))
+			self.train_step=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.cost)
 
+		with tf.Session() as sess:
+			sess.run(tf.global_variables_initializer()) 	
+		
 	def fit(self, X, y):
-		self.train_step=tf.train.RMSPropOptimizer(self.learning_rate).minimize(self.cost)
 		with tf.Session() as sess:
 			for epoch in range(self.epochs):
-				#_= sess.run(self.cost, feed_dict={self.input_layer:X, self.y_:y})
 				cost, _= sess.run([self.cost, self.train_step], feed_dict={self.input_layer:X, self.y_:y})
 		
 
@@ -62,9 +69,12 @@ class Net:
 
 
 	def visualize(self):
-		pass
+		with tf.Session() as sess:
+			writer=tf.summary.FileWriter("./logs/nn_logs", graph=tf.get_default_graph())
+			merged=tf.summary.merge_all()
+			webbrowser.open('http://127.0.1.1:6006', new=2)
+		
 
 if __name__ =="__main__":
 	myNet=Net(net_dict)
 	myNet.visualize()
-	#myNet.fit([[1,2], [5,3], [23,4], [23,456]], [0,0,1,0])
