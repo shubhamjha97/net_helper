@@ -33,7 +33,7 @@ class Net:
 		self.y_=tf.placeholder(tf.float32, [None, self.output_dim])
 
 		for i in range(0,(len(self.layer_dict)-1)):
-			#print i
+			print i
 			if i==0: #check for first matrix
 				with tf.name_scope('input_layer'):
 					if len(self.layer_dict)==2:
@@ -54,11 +54,11 @@ class Net:
 				 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
 				 		self.output_layer=tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i]))
 				 	else:
-				 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['output']['neurons']]))) 
+				 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
 				 		self.output_layer=tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i]))
 			else:
 			 	with tf.name_scope('layer_'+str(i-1)):
-		  			#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
+		  			print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
 		  			self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['l'+str(i)]['neurons']])))  
 		  			self.layers.append(tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i])))
 		with tf.name_scope('cost'):
