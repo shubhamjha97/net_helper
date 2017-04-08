@@ -28,7 +28,7 @@ class Net:
 					print 'input_dim=', self.input_dim
 			elif layer_name=='output':
 					self.output_dim=layer_attrs['neurons']
-					print 'input_dim=', self.input_dim
+					print 'output_dim=', self.output_dim
 		self.input_layer=tf.placeholder(tf.float32, [None, self.input_dim])
 		self.y_=tf.placeholder(tf.float32, [None, self.output_dim])
 
@@ -47,24 +47,20 @@ class Net:
 						self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['l'+str(i)]['neurons']])))
 						self.layers.append(tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i])))
 					
-
 			elif i==(len(self.layer_dict)-2): #check for last matrix
-				# with tf.name_scope('output_layer'):
-				# 	if len(self.layer_dict)==2:
-				# 		#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['output']['neurons']
-				# 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
-				# 		#print 'abcd'
-				# 		self.output_layer=tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i]))
-				# 	else:
-				# 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['output']['neurons']]))) 
-				# 		self.output_layer=tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i]))
-				print 'abcd'
+				with tf.name_scope('output_layer'):
+					if len(self.layer_dict)==2:
+						print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['output']['neurons']
+				 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['output']['neurons']]))) 
+				 		self.output_layer=tf.nn.sigmoid(tf.matmul(self.input_layer, self.W[i]))
+				 	else:
+				 		self.W.append(tf.Variable(tf.zeros([self.layer_dict['input']['neurons'], self.layer_dict['output']['neurons']]))) 
+				 		self.output_layer=tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i]))
 			else:
-			# 	with tf.name_scope('layer_'+str(i-1)):
-		 # 			#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
-		 # 			self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['l'+str(i)]['neurons']])))  
-		 # 			self.layers.append(tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i])))
-			 print 'blah'
+			 	with tf.name_scope('layer_'+str(i-1)):
+		  			#print self.layer_dict['l'+str(i-1)]['neurons'],'x', self.layer_dict['l'+str(i)]['neurons']
+		  			self.W.append(tf.Variable(tf.zeros([self.layer_dict['l'+str(i-1)]['neurons'], self.layer_dict['l'+str(i)]['neurons']])))  
+		  			self.layers.append(tf.nn.sigmoid(tf.matmul(self.layers[i-1], self.W[i])))
 		with tf.name_scope('cost'):
 			if cost_fn=='CRSENT':
 				self.cost=tf.reduce_mean(-tf.reduce_sum(self.y_*tf.log(self.output_layer+0.01), reduction_indices=[1]))
